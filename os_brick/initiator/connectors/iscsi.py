@@ -36,6 +36,8 @@ from os_brick.initiator.connectors import base_iscsi
 from os_brick.initiator import utils as initiator_utils
 from os_brick import utils
 
+import json
+
 synchronized = lockutils.synchronized_with_prefix('os-brick-')
 
 LOG = logging.getLogger(__name__)
@@ -60,6 +62,8 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
             transport=transport, *args, **kwargs)  # type: ignore
         self.use_multipath: bool = use_multipath
         self.transport: str = self._validate_iface_transport(transport)
+
+        print("qmco_api initialized iscsi connector")
 
     @staticmethod
     def get_connector_properties(root_helper: str, *args, **kwargs) -> dict:
@@ -311,7 +315,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                                        '-I',
                                        transport_iface],
                                       check_exit_code=[0, 2, 6])[0] or ""
-        LOG.debug("iscsiadm %(iface)s configuration: stdout=%(out)s.",
+        LOG.info("iscsiadm %(iface)s configuration: stdout=%(out)s.",
                   {'iface': transport_iface, 'out': out})
         for data in [line.split() for line in out.splitlines()]:
             if data[0] == 'iface.transport_name':
@@ -368,7 +372,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         regex = ''.join(('^SENDTARGETS:\n.*?^DiscoveryAddress: ',
                          ip, ',', port,
                          '.*?\n(.*?)^(?:DiscoveryAddress|iSNS):.*'))
-        LOG.debug('Regex to get portals from discoverydb: %s', regex)
+        LOG.info('Regex to get portals from discoverydb: %s', regex)
 
         info = re.search(regex, out, re.DOTALL | re.MULTILINE)
 
@@ -512,6 +516,11 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         target_lun(s) - LUN id of the volume
         Note that plural keys may be used when use_multipath=True
         """
+
+        formatted = json.dumps(connection_properties, indent=4)
+        LOG.info("qmco - connect_volume(connection_properties): %s", formatted)
+        print("qmco - connect_volume(connection_properties): %s", formatted)
+        
         try:
             if self.use_multipath:
                 return self._connect_multipath_volume(connection_properties)
@@ -580,7 +589,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                         break
                     time.sleep(1)
                 else:
-                    LOG.debug('Could not find the WWN for %s.',
+                    LOG.info('Could not find the WWN for %s.',
                               found_devs[0])  # type: ignore
                 return self._get_connect_result(connection_properties,
                                                 wwn, found_devs)
@@ -647,7 +656,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                 seconds_next_scan = 4
 
             data['num_logins'] += 1
-            LOG.debug('Connected to %s', portal)
+            LOG.info('Connected to %s', portal)
             while do_scans:
                 try:
                     if not hctl:
@@ -675,7 +684,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                     seconds_next_scan -= 1
 
             if device:
-                LOG.debug('Connected to %s using %s', device,
+                LOG.info('Connected to %s using %s', device,
                           strutils.mask_password(props))
             else:
                 LOG.warning('LUN %(lun)s on iSCSI portal %(portal)s not found '
@@ -769,7 +778,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
             # Give some extra time after all threads have finished.
             if (not last_try_on and found and
                     len(ips_iqns_luns) == data['stopped_threads']):
-                LOG.debug('All connection threads finished, giving 10 seconds '
+                LOG.info('All connection threads finished, giving 10 seconds '
                           'for dm to appear.')
                 last_try_on = time.time() + 10
             elif last_try_on and last_try_on < time.time():
@@ -825,7 +834,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
             ips_iqns_luns = self._get_ips_iqns_luns(
                 connection_properties, discover=False,
                 is_disconnect_call=is_disconnect_call)
-        LOG.debug('Getting connected devices for (ips,iqns,luns)=%s',
+        LOG.info('Getting connected devices for (ips,iqns,luns)=%s',
                   ips_iqns_luns)
         nodes = self._get_iscsi_nodes()
         sessions = self._get_iscsi_sessions_full()
@@ -858,7 +867,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                 else:
                     others.add(device)
 
-        LOG.debug('Resulting device map %s', device_map)
+        LOG.info('Resulting device map %s', device_map)
         return device_map
 
     @utils.trace
@@ -920,7 +929,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         except exception.TargetPortalNotFound as exc:
             # When discovery sendtargets failed on connect there is no
             # information in the discoverydb, so there's nothing to clean.
-            LOG.debug('Skipping cleanup %s', exc)
+            LOG.info('Skipping cleanup %s', exc)
             return
 
         # Remove devices and multipath from this connection
@@ -948,7 +957,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         # removed the devices and we may have even logged off (only reaches
         # here with multipath_name if force=True).
         if multipath_name:
-            LOG.debug('Flushing again multipath %s now that we removed the '
+            LOG.info('Flushing again multipath %s now that we removed the '
                       'devices.', multipath_name)
             self._linuxscsi.flush_multipath_device(multipath_name)
 
@@ -1017,7 +1026,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         msg = ("iscsiadm %(iscsi_command)s: stdout=%(out)s stderr=%(err)s" %
                {'iscsi_command': iscsi_command, 'out': out, 'err': err})
         # don't let passwords be shown in log output
-        LOG.debug(strutils.mask_password(msg))
+        LOG.info(strutils.mask_password(msg))
 
         return (out, err)
 
@@ -1076,7 +1085,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                                                   check_exit_code=(0, 6))
             if err_new:
                 # retry if iscsiadm returns 6 for "database failure"
-                LOG.debug("Retrying to connect to iSCSI portal %s", portal)
+                LOG.info("Retrying to connect to iSCSI portal %s", portal)
                 msg = (_("Encountered database failure for %s.") % (portal))
                 raise exception.BrickException(msg=msg)
 
@@ -1140,7 +1149,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
 
     def _disconnect_connection(self, connection_properties, connections, force,
                                exc):
-        LOG.debug('Disconnecting from: %s', connections)
+        LOG.info('Disconnecting from: %s', connections)
         props = connection_properties.copy()
         for ip, iqn in connections:
             props['target_portal'] = ip
@@ -1151,7 +1160,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
     def _run_iscsi_session(self):
         (out, err) = self._run_iscsiadm_bare(('-m', 'session'),
                                              check_exit_code=[0, 21, 255])
-        LOG.debug("iscsi session list stdout=%(out)s stderr=%(err)s",
+        LOG.info("iscsi session list stdout=%(out)s stderr=%(err)s",
                   {'out': out, 'err': err})
         return (out, err)
 
@@ -1162,7 +1171,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                                    run_as_root=True,
                                    root_helper=self._root_helper,
                                    check_exit_code=check_exit_code)
-        LOG.debug("iscsiadm %(iscsi_command)s: stdout=%(out)s stderr=%(err)s",
+        LOG.info("iscsiadm %(iscsi_command)s: stdout=%(out)s stderr=%(err)s",
                   {'iscsi_command': iscsi_command, 'out': out, 'err': err})
         return (out, err)
 
@@ -1173,7 +1182,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                                    run_as_root=True,
                                    root_helper=self._root_helper,
                                    check_exit_code=check_exit_code)
-        LOG.debug("multipath %(multipath_command)s: "
+        LOG.info("multipath %(multipath_command)s: "
                   "stdout=%(out)s stderr=%(err)s",
                   {'multipath_command': multipath_command,
                    'out': out, 'err': err})
