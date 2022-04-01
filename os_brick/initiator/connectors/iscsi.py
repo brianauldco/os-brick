@@ -37,6 +37,9 @@ from os_brick.initiator import utils as initiator_utils
 from os_brick import utils
 
 import json
+import traceback
+import sys
+import pprint
 
 synchronized = lockutils.synchronized_with_prefix('os-brick-')
 
@@ -1011,6 +1014,16 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
             return None
 
     def _run_iscsiadm(self, connection_properties, iscsi_command, **kwargs):
+
+        LOG.info("qmco_api _run_iscsiadm: connection_properties:%s iscsi_command:%s", connection_properties, iscsi_command)
+
+        #pprint(traceback.format_stack())
+        # self sline = 0
+        # for line in traceback.format_stack():
+        #     print ("%d: %s", sline, line.strip())
+        #     sline = sline + 1
+            
+
         check_exit_code = kwargs.pop('check_exit_code', 0)
         attempts = kwargs.pop('attempts', 1)
         delay_on_retry = kwargs.pop('delay_on_retry', True)
@@ -1026,7 +1039,8 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         msg = ("iscsiadm %(iscsi_command)s: stdout=%(out)s stderr=%(err)s" %
                {'iscsi_command': iscsi_command, 'out': out, 'err': err})
         # don't let passwords be shown in log output
-        LOG.info(strutils.mask_password(msg))
+        #LOG.info(strutils.mask_password(msg))
+        LOG.info(msg)
 
         return (out, err)
 
