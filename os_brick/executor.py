@@ -26,7 +26,7 @@ from oslo_context import context as context_utils
 from oslo_utils import encodeutils
 
 from os_brick.privileged import rootwrap as priv_rootwrap
-
+import pprint
 
 class Executor(object):
     def __init__(self, root_helper, execute=None,
@@ -49,6 +49,8 @@ class Executor(object):
                 setattr(exc, field, cls.safe_decode(value))
 
     def _execute(self, *args, **kwargs) -> Tuple[str, str]:
+        print("args:", args)
+        print("kwargs", kwargs)
         try:
             result = self.__execute(*args, **kwargs)
             if result:
