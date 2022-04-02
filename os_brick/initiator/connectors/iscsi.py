@@ -1137,11 +1137,16 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
             sessions = self._get_iscsi_sessions_full()
             for s in sessions:
                 print("checking session:", s)
-                print("s[0] s[2].lower(), s[4]", s[0], s[2].lower(), s[4])
-                # Found our session, return session_id
+                print("Prefix exp:", self.VALID_SESSIONS_PREFIX)
+                print("Prefix act:", s[0])
+                print("Portal Lower Exp:", portal.lower())
+                print("Portal Lower Act:", s[2].lower())
+                print("IQN Exp:", target_iqn)
+                print("IQN Act:", s[4])
                 if (s[0] in self.VALID_SESSIONS_PREFIX and
                         portal.lower() == s[2].lower() and s[4] == target_iqn):
                     return s[1], manual_scan
+                print("qmco no matching session try again")
 
             try:
                 # exit_code=15 means the session already exists, so it should
