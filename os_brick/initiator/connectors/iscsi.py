@@ -1136,6 +1136,8 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
             # sessions to see if the node is logged in.
             sessions = self._get_iscsi_sessions_full()
             for s in sessions:
+                print("checking session:", s)
+                print("s[0] s[2].lower(), s[4]", s[0], s[2].lower(), s[4])
                 # Found our session, return session_id
                 if (s[0] in self.VALID_SESSIONS_PREFIX and
                         portal.lower() == s[2].lower() and s[4] == target_iqn):
