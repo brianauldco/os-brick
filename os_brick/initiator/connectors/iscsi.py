@@ -578,6 +578,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
     @utils.retry((exception.VolumeDeviceNotFound))
     def _connect_single_volume(self, connection_properties):
         """Connect to a volume using a single path."""
+        LOG.info("qmco func: _connect_single_volume()")
         data = {'stop_connecting': False, 'num_logins': 0, 'failed_logins': 0,
                 'stopped_threads': 0, 'found_devices': [],
                 'just_added_devices': []}
@@ -639,6 +640,8 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         :param props: Properties of the connection.
         :param data: Shared data.
         """
+
+        LOG.info("qmco func: _connect_vol()")
         device = hctl = None
         portal = props['target_portal']
         try:
@@ -1015,7 +1018,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
 
     def _run_iscsiadm(self, connection_properties, iscsi_command, **kwargs):
 
-        LOG.info("qmco_api _run_iscsiadm: connection_properties:%s iscsi_command:%s", connection_properties, iscsi_command)
+        LOG.info("qmco func: _run_iscsiadm: connection_properties:%s iscsi_command:%s", connection_properties, iscsi_command)
 
         #pprint(traceback.format_stack())
         # self sline = 0
@@ -1067,6 +1070,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
 
     def _connect_to_iscsi_portal(self, connection_properties):
         """Safely connect to iSCSI portal-target and return the session id."""
+        LOG.info("qmco func: _connect_to_iscsi_portal()")
         portal = connection_properties['target_portal'].split(",")[0]
         target_iqn = connection_properties['target_iqn']
 
@@ -1078,6 +1082,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
     @utils.retry((exception.BrickException))
     def _connect_to_iscsi_portal_unsafe(self, connection_properties):
         """Connect to an iSCSI portal-target an return the session id."""
+        LOG.info("qmco func: _connect_to_iscsi_portal_unsafe()")
         portal = connection_properties['target_portal'].split(",")[0]
         target_iqn = connection_properties['target_iqn']
 
@@ -1105,7 +1110,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
 
         # Try to set the scan mode to manual
         res = self._iscsiadm_update(connection_properties,
-                                    'node.session.scan', 'manual',
+                                    'node.session.scan', 'auto',
                                     check_exit_code=False)
         manual_scan = not res[1]
         # Update global indicator of manual scan support used for
