@@ -64,7 +64,8 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
             execute=execute,
             device_scan_attempts=device_scan_attempts,
             transport=transport, *args, **kwargs)  # type: ignore
-        self.use_multipath: bool = use_multipath
+        #self.use_multipath: bool = use_multipath
+        self.use_multipath: bool = True
         self.transport: str = self._validate_iface_transport(transport)
 
         print("qmco_api initialized iscsi connector")
