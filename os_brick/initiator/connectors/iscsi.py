@@ -72,7 +72,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
 
     @staticmethod
     def get_connector_properties(root_helper: str, *args, **kwargs) -> dict:
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         """The iSCSI connector properties."""
         props = {}
         iscsi = ISCSIConnector(root_helper=root_helper,
@@ -81,6 +81,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         if initiator:
             props['initiator'] = initiator
 
+        print("qmco_func: exit", inspect.stack()[0][3])
         return props
 
     def get_search_path(self) -> str:
@@ -88,7 +89,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         return '/dev/disk/by-path'
 
     def get_volume_paths(self, connection_properties: dict) -> list:
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         """Get the list of existing paths for a volume.
 
         This method's job is to simply report what might/should
@@ -117,10 +118,11 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
             if os.path.exists(path):
                 volume_paths.append(path)
 
+        print("qmco_func: exit", inspect.stack()[0][3])
         return volume_paths
 
     def _get_iscsi_sessions_full(self) -> List[tuple]:
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         """Get iSCSI session information as a list of tuples.
 
         Uses iscsiadm -m session and from a command output like
@@ -145,10 +147,11 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                 sid = info[1][1:-1]
                 portal, tpgt = info[2].split(',')
                 lines.append((info[0], sid, portal, tpgt, info[3]))
+        print("qmco_func: exit", inspect.stack()[0][3])
         return lines
 
     def _get_iscsi_nodes(self) -> List[tuple]:
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         """Get iSCSI node information (portal, iqn) as a list of tuples.
 
         Uses iscsiadm -m node and from a command output like
@@ -175,12 +178,14 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                     lines.append((info[0].split(',')[0], info[1]))
                 except IndexError:
                     pass
+        print("qmco_func: exit", inspect.stack()[0][3])
         return lines
 
     def _get_iscsi_sessions(self) -> list:
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         """Return portals for all existing sessions."""
         # entry: [tcp, [1], 192.168.121.250:3260,1 ...]
+        print("qmco_func: exit", inspect.stack()[0][3])
         return [entry[2] for entry in self._get_iscsi_sessions_full()]
 
     def _get_ips_iqns_luns(self,
@@ -209,7 +214,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         """
         # There are cases where we don't know if the local attach was done
         # using multipathing or single pathing, so assume multipathing.
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         try:
             if ('target_portals' in connection_properties and
                     'target_iqns' in connection_properties):
@@ -253,6 +258,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                 ips_iqns_luns = [(p[0], main_iqn, p[1])
                                  for p in all_portals]
 
+        print("qmco_func: exit", inspect.stack()[0][3])
         return ips_iqns_luns
 
     def _get_potential_volume_paths(self,
@@ -275,7 +281,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         :type connection_properties: dict
         :returns: list
         """
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         if self.use_multipath:
             LOG.info("Multipath discovery for iSCSI enabled")
             # Multipath installed, discovering other targets if available
@@ -294,12 +300,14 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                     host_devices.update(paths)
             host_devices = list(host_devices)
 
+        print("qmco_func: exit", inspect.stack()[0][3])
         return host_devices
 
     def set_execute(self, execute):
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         super(ISCSIConnector, self).set_execute(execute)
         self._linuxscsi.set_execute(execute)
+        print("qmco_func: exit", inspect.stack()[0][3])
 
     def _validate_iface_transport(self, transport_iface: str) -> str:
         """Check that given iscsi_iface uses only supported transports
@@ -315,7 +323,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         :type transport_iface: str
         :returns: str
         """
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         # Note that default(iscsi_tcp) and iser do not require a separate
         # iface file, just the transport is enough and do not need to be
         # validated. This is not the case for the other entries in
@@ -339,10 +347,12 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         LOG.warning("No useable transport found for iscsi iface %s. "
                     "Falling back to default transport.",
                     transport_iface)
+        print("qmco_func: exit", inspect.stack()[0][3])
         return 'default'
 
     def _get_transport(self) -> str:
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
+        print("qmco_func: exit ", inspect.stack()[0][3])
         return self.transport
 
     def _get_discoverydb_portals(self,
@@ -377,7 +387,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         :type connection_properties: dict
         :returns: list of tuples of (ip, iqn, lun)
         """
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         ip, port = connection_properties['target_portal'].rsplit(':', 1)
         # NOTE(geguileo): I don't know if IPv6 will be reported with []
         # or not, so we'll make them optional.
@@ -418,10 +428,11 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                 _('Unable to find target portals information on discoverydb.'))
 
         luns = self._get_luns(connection_properties, iqns)
+        print("qmco_func: exit", inspect.stack()[0][3])
         return list(zip(ips, iqns, luns))
 
     def _discover_iscsi_portals(self, connection_properties: dict) -> list:
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         out = None
         iscsi_transport = ('iser' if self._get_transport() == 'iser'
                            else 'default')
@@ -474,11 +485,16 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
 
         ips, iqns = self._get_target_portals_from_iscsiadm_output(out)
         luns = self._get_luns(connection_properties, iqns)
+        print("_disover_iscsi_portals: ips:{}".format(ips))
+        print("_disover_iscsi_portals: iqns:{}".format(iqns))
+        print("_disover_iscsi_portals: luns:{}".format(luns))
+        print("qmco_func: exit", inspect.stack()[0][3])
         return list(zip(ips, iqns, luns))
 
     def _run_iscsiadm_update_discoverydb(self, connection_properties,
                                          iscsi_transport='default'):
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
+        print("qmco_func: exit", inspect.stack()[0][3])
         return self._execute(
             'iscsiadm',
             '-m', 'discoverydb',
@@ -503,13 +519,14 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         Try and update the local kernel's size information
         for an iSCSI volume.
         """
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         LOG.info("Extend volume for %s",
                  strutils.mask_dict_password(connection_properties))
 
         volume_paths = self.get_volume_paths(connection_properties)
         LOG.info("Found paths for volume %s", volume_paths)
         if volume_paths:
+            print("qmco_func: exit", inspect.stack()[0][3])
             return self._linuxscsi.extend_volume(
                 volume_paths, use_multipath=self.use_multipath)
         else:
@@ -535,7 +552,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         target_lun(s) - LUN id of the volume
         Note that plural keys may be used when use_multipath=True
         """
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
 
         formatted = json.dumps(connection_properties, indent=4)
         LOG.info("qmco - connect_volume(connection_properties): %s", formatted)
@@ -551,10 +568,11 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
             # don't, which helps on bad network cases.
             with excutils.save_and_reraise_exception():
                 self._cleanup_connection(connection_properties, force=True)
+        print("qmco_func: exit", inspect.stack()[0][3])
 
     @utils.retry((exception.VolumeDeviceNotFound))
     def _get_device_link(self, wwn, device, mpath):
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         # These are the default symlinks that should always be there
         if mpath:
             symlink = '/dev/disk/by-id/dm-uuid-mpath-' + mpath
@@ -573,10 +591,11 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
             else:
                 # Raising this will trigger the next retry
                 raise exception.VolumeDeviceNotFound(device='/dev/disk/by-id')
+        print("qmco_func: exit", inspect.stack()[0][3])
         return symlink
 
     def _get_connect_result(self, con_props, wwn, devices_names, mpath=None):
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         device = '/dev/' + (mpath or devices_names[0])
 
         # NOTE(geguileo): This is only necessary because of the current
@@ -592,11 +611,12 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         result = {'type': 'block', 'scsi_wwn': wwn, 'path': device}
         if mpath:
             result['multipath_id'] = wwn
+        print("qmco_func: exit", inspect.stack()[0][3])
         return result
 
     @utils.retry((exception.VolumeDeviceNotFound))
     def _connect_single_volume(self, connection_properties):
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         """Connect to a volume using a single path."""
         LOG.info("qmco func: _connect_single_volume()")
         data = {'stop_connecting': False, 'num_logins': 0, 'failed_logins': 0,
@@ -615,6 +635,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                 else:
                     LOG.info('Could not find the WWN for %s.',
                               found_devs[0])  # type: ignore
+                print("qmco_func: exit", inspect.stack()[0][3])
                 return self._get_connect_result(connection_properties,
                                                 wwn, found_devs)
 
@@ -627,6 +648,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
             # Reset connection result values for next try
             data.update(num_logins=0, failed_logins=0, found_devices=[])
 
+        print("qmco_func: exit_exception", inspect.stack()[0][3])
         raise exception.VolumeDeviceNotFound(device='')
 
     def _connect_vol(self, rescans, props, data):
@@ -661,7 +683,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         :param data: Shared data.
         """
 
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         device = hctl = None
         portal = props['target_portal']
         try:
@@ -724,6 +746,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
             data['found_devices'].append(device)
             data['just_added_devices'].append(device)
         data['stopped_threads'] += 1
+        print("qmco_func: exit", inspect.stack()[0][3])
 
     @utils.retry((exception.VolumeDeviceNotFound))
     def _connect_multipath_volume(self, connection_properties):
@@ -742,7 +765,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         it's already known by multipathd it would have been discarded if it
         was the first time this volume was seen here.
         """
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
 
         wwn = mpath = None
         wwn_added = False
@@ -829,6 +852,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                         'bad and will perform poorly.')
         elif not wwn:
             wwn = self._linuxscsi.get_sysfs_wwn(found, mpath)
+        print("qmco_func: exit", inspect.stack()[0][3])
         return self._get_connect_result(connection_properties, wwn, found,
                                         mpath)
 
@@ -858,7 +882,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         _cleanup_conection method.
         """
 
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         if not ips_iqns_luns:
             # This is a cleanup, don't do discovery
             ips_iqns_luns = self._get_ips_iqns_luns(
@@ -898,6 +922,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                     others.add(device)
 
         LOG.info('Resulting device map %s', device_map)
+        print("qmco_func: exit", inspect.stack()[0][3])
         return device_map
 
     @utils.trace
@@ -921,7 +946,8 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                               the operation.  Default is False.
         :type ignore_errors: bool
         """
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
+        print("qmco_func: exit", inspect.stack()[0][3])
         return self._cleanup_connection(connection_properties, force=force,
                                         ignore_errors=ignore_errors,
                                         device_info=device_info,
@@ -952,7 +978,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         :type is_disconnect_call: bool
         :type ignore_errors: bool
         """
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         exc = exception.ExceptionChainer()
         try:
             devices_map = self._get_connection_devices(connection_properties,
@@ -998,6 +1024,7 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                         'in the system', remove_devices)
             if not ignore_errors:
                 raise exc  # type: ignore
+        print("qmco_func: exit", inspect.stack()[0][3])
 
     def _munge_portal(self, target):
         """Remove brackets from portal.
@@ -1005,14 +1032,16 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         In case IPv6 address was used the udev path should not contain any
         brackets. Udev code specifically forbids that.
         """
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         portal, iqn, lun = target
+        print("qmco_func: exit", inspect.stack()[0][3])
         return (portal.replace('[', '').replace(']', ''), iqn,
                 self._linuxscsi.process_lun_id(lun))
 
     def _get_device_path(self, connection_properties):
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         if self._get_transport() == "default":
+            print("qmco_func: if exit", inspect.stack()[0][3])
             return ["/dev/disk/by-path/ip-%s-iscsi-%s-lun-%s" %
                     self._munge_portal(x) for x in
                     self._get_all_targets(connection_properties)]
@@ -1027,11 +1056,12 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                     self._munge_portal(x))
                 if look_for_device:
                     device_list.extend(look_for_device)
+            print("qmco_func: else exit", inspect.stack()[0][3])
             return device_list
 
     def get_initiator(self):
         """Secure helper to read file as root."""
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         file_path = '/etc/iscsi/initiatorname.iscsi'
         try:
             lines, _err = self._execute('cat', file_path, run_as_root=True,
@@ -1043,11 +1073,12 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         except putils.ProcessExecutionError:
             LOG.warning("Could not find the iSCSI Initiator File %s",
                         file_path)
+            print("qmco_func: exit", inspect.stack()[0][3])
             return None
 
     def _run_iscsiadm(self, connection_properties, iscsi_command, **kwargs):
 
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         LOG.info("qmco func: _run_iscsiadm: connection_properties:%s iscsi_command:%s", connection_properties, iscsi_command)
 
         #pprint(traceback.format_stack())
@@ -1075,13 +1106,15 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         #LOG.info(strutils.mask_password(msg))
         LOG.info(msg)
 
+        print("qmco_func: exit", inspect.stack()[0][3])
         return (out, err)
 
     def _iscsiadm_update(self, connection_properties, property_key,
                          property_value, **kwargs):
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         iscsi_command = ('--op', 'update', '-n', property_key,
                          '-v', property_value)
+        print("qmco_func: exit", inspect.stack()[0][3])
         return self._run_iscsiadm(connection_properties, iscsi_command,
                                   **kwargs)
 
@@ -1091,30 +1124,32 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
         # as we are parsing a command line utility, allow for the
         # possibility that additional debug data is spewed in the
         # stream, and only grab actual ip / iqn lines.
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         ips = []
         iqns = []
         for data in [line.split() for line in output.splitlines()]:
-            if len(data) == 2 and data[1].startswith('iqn.'):
+            if (len(data) == 2) and (data[1].startswith('iqn.') or data[1].startswith('naa.600176c')):
                 ips.append(data[0].split(',')[0])
                 iqns.append(data[1])
+        print("qmco_func: exit", inspect.stack()[0][3])
         return ips, iqns
 
     def _connect_to_iscsi_portal(self, connection_properties):
         """Safely connect to iSCSI portal-target and return the session id."""
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         portal = connection_properties['target_portal'].split(",")[0]
         target_iqn = connection_properties['target_iqn']
 
         lock_name = f'connect_to_iscsi_portal-{portal}-{target_iqn}'
         method = synchronized(
             lock_name, external=True)(self._connect_to_iscsi_portal_unsafe)
+        print("qmco_func: exit", inspect.stack()[0][3])
         return method(connection_properties)
 
     @utils.retry((exception.BrickException))
     def _connect_to_iscsi_portal_unsafe(self, connection_properties):
         """Connect to an iSCSI portal-target an return the session id."""
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         portal = connection_properties['target_portal'].split(",")[0]
         target_iqn = connection_properties['target_iqn']
 
@@ -1194,9 +1229,10 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
             self._iscsiadm_update(connection_properties,
                                   "node.startup",
                                   "automatic")
+        print("qmco_func: exit", inspect.stack()[0][3])
 
     def _disconnect_from_iscsi_portal(self, connection_properties):
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         self._iscsiadm_update(connection_properties, "node.startup", "manual",
                               check_exit_code=[0, 21, 255])
         self._run_iscsiadm(connection_properties, ("--logout",),
@@ -1205,10 +1241,11 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                            check_exit_code=[0, 21, 255],
                            attempts=5,
                            delay_on_retry=True)
+        print("qmco_func: exit", inspect.stack()[0][3])
 
     def _disconnect_connection(self, connection_properties, connections, force,
                                exc):
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         LOG.info('Disconnecting from: %s', connections)
         props = connection_properties.copy()
         for ip, iqn in connections:
@@ -1216,17 +1253,19 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
             props['target_iqn'] = iqn
             with exc.context(force, 'Disconnect from %s %s failed', ip, iqn):
                 self._disconnect_from_iscsi_portal(props)
+        print("qmco_func: exit", inspect.stack()[0][3])
 
     def _run_iscsi_session(self):
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         (out, err) = self._run_iscsiadm_bare(('-m', 'session'),
                                              check_exit_code=[0, 21, 255])
         LOG.info("iscsi session list stdout=%(out)s stderr=%(err)s",
                   {'out': out, 'err': err})
+        print("qmco_func: exit", inspect.stack()[0][3])
         return (out, err)
 
     def _run_iscsiadm_bare(self, iscsi_command, **kwargs) -> Tuple[str, str]:
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         check_exit_code = kwargs.pop('check_exit_code', 0)
         (out, err) = self._execute('iscsiadm',
                                    *iscsi_command,
@@ -1235,10 +1274,11 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                                    check_exit_code=check_exit_code)
         LOG.info("iscsiadm %(iscsi_command)s: stdout=%(out)s stderr=%(err)s",
                   {'iscsi_command': iscsi_command, 'out': out, 'err': err})
+        print("qmco_func: exit", inspect.stack()[0][3])
         return (out, err)
 
     def _run_multipath(self, multipath_command, **kwargs):
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         check_exit_code = kwargs.pop('check_exit_code', 0)
         (out, err) = self._execute('multipath',
                                    *multipath_command,
@@ -1249,12 +1289,13 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                   "stdout=%(out)s stderr=%(err)s",
                   {'multipath_command': multipath_command,
                    'out': out, 'err': err})
+        print("qmco_func: exit", inspect.stack()[0][3])
         return (out, err)
 
     def _get_node_startup_values(self, connection_properties):
         # Exit code 21 (ISCSI_ERR_NO_OBJS_FOUND) occurs when no nodes
         # exist - must consider this an empty (successful) result.
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         out, __ = self._run_iscsiadm_bare(
             ['-m', 'node', '--op', 'show', '-p',
              connection_properties['target_portal']],
@@ -1280,11 +1321,12 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
             except IndexError:
                 pass
 
+        print("qmco_func: exit", inspect.stack()[0][3])
         return startup_values
 
     def _recover_node_startup_values(self, connection_properties,
                                      old_node_startups):
-        print("qmco_func: ", inspect.stack()[0][3])
+        print("qmco_func: enter ", inspect.stack()[0][3])
         node_startups = self._get_node_startup_values(connection_properties)
         for iqn, node_startup in node_startups.items():
             old_node_startup = old_node_startups.get(iqn, None)
@@ -1299,3 +1341,4 @@ class ISCSIConnector(base.BaseLinuxConnector, base_iscsi.BaseISCSIConnector):
                 self._iscsiadm_update(recover_connection,
                                       "node.startup",
                                       old_node_startup)
+        print("qmco_func: exit", inspect.stack()[0][3])
